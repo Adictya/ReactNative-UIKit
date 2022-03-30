@@ -3,24 +3,7 @@ import {StyleProp, ViewStyle} from 'react-native';
 import {RtcEngineEvents} from 'react-native-agora/lib/typescript/src/common/RtcEvents';
 import {EncryptionMode} from 'react-native-agora';
 import {VideoProfile} from '../Utils/quality';
-
-/* User role for live streaming mode */
-export enum ClientRole {
-  /* 1: A host can both send and receive streams. */
-  Broadcaster = 1,
-  /* 2: The default role. An audience can only receive streams. */
-  Audience = 2,
-}
-
-/* Mode for RTC (Live or Broadcast) */
-export enum ChannelProfile {
-  /** 0: (Default) The Communication profile.
-   *  Use this profile in one-on-one calls or group calls, where all users can talk freely. */
-  Communication = 0,
-  /**  1: The Live-Broadcast profile.
-   *   Users in a live-broadcast channel have a role as either host or audience. A host can both send and receive streams; an audience can only receive streams. */
-  LiveBroadcasting = 1,
-}
+import {UidStateInterface} from './RtcContext';
 
 // disabled is intentionally kept as the 1st item in the enum.
 // This way, it evaluates to a falsy value in a if statement
@@ -34,12 +17,26 @@ export enum ToggleState {
 export const toggleHelper = (state: ToggleState) =>
   state === ToggleState.enabled ? ToggleState.disabled : ToggleState.enabled;
 
-export interface UidInterface {
+export interface UserUidInterface<T> {
+  type: T extends DefaultUidInterface['type'] ? never : T
+}
+
+interface DefaultUidInterface {
   // TODO: refactor local to 0 and remove string.
   uid: number | string;
   audio: ToggleState;
   video: ToggleState;
   streamType: 'high' | 'low';
+  type: 'rtc';
+}
+
+// export type UidInterface = DefaultUidInterface;
+export interface UidInterface {
+  uid: number | string;
+  audio: ToggleState;
+  video: ToggleState;
+  streamType: 'high' | 'low';
+  type: 'rtc';
 }
 
 interface remoteBtnStylesInterface {
@@ -47,7 +44,6 @@ interface remoteBtnStylesInterface {
   muteRemoteVideo?: StyleProp<ViewStyle>;
   remoteSwap?: StyleProp<ViewStyle>;
   minCloseBtnStyles?: StyleProp<ViewStyle>;
-  liveStreamHostControlBtns?: StyleProp<ViewStyle>;
 }
 
 interface localBtnStylesInterface {
@@ -83,7 +79,6 @@ export interface RtcPropsInterface {
   dual?: boolean | null;
   profile?: VideoProfile;
   initialDualStreamMode?: DualStreamMode;
-  role?: ClientRole /* Set local user's role between audience and host. Use with mode set to livestreaming. (default: host) */;
   callActive?: boolean;
   encryption?: {
     key: string;
@@ -109,6 +104,9 @@ export interface CallbacksInterface {
   RemoteAudioStateChanged: RtcEngineEvents['RemoteAudioStateChanged'];
   RemoteVideoStateChanged: RtcEngineEvents['RemoteVideoStateChanged'];
   JoinChannelSuccess: RtcEngineEvents['JoinChannelSuccess'];
+  SetState(
+    param: UidStateInterface | ((p: UidStateInterface) => UidStateInterface),
+  ): void;
 }
 
 export type CustomCallbacksInterface = CallbacksInterface;
@@ -117,7 +115,6 @@ export interface PropsInterface {
   rtcProps: RtcPropsInterface;
   styleProps?: Partial<StylePropInterface>;
   callbacks?: Partial<CallbacksInterface>;
-  mode?: ChannelProfile;
 }
 
 const initialValue: PropsInterface = {

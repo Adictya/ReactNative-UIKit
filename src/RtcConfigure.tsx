@@ -4,6 +4,7 @@ import {
   UidStateInterface,
   DispatchType,
   ActionType,
+  ActionInterface,
 } from './Contexts/RtcContext';
 import PropsContext, {
   ToggleState,
@@ -11,8 +12,6 @@ import PropsContext, {
   RtcPropsInterface,
   CallbacksInterface,
   DualStreamMode,
-  ClientRole,
-  ChannelProfile,
 } from './Contexts/PropsContext';
 import {MinUidProvider} from './Contexts/MinUidContext';
 import {MaxUidProvider} from './Contexts/MaxUidContext';
@@ -32,32 +31,24 @@ import {
 import Create from './Rtc/Create';
 import Join from './Rtc/Join';
 
+const initialLocalState: UidStateInterface = {
+  min: [],
+  max: [
+    {
+      uid: 'local',
+      audio: ToggleState.enabled,
+      video: ToggleState.enabled,
+      streamType: 'high',
+      type: 'rtc',
+    },
+  ],
+};
+
 const RtcConfigure: React.FC<Partial<RtcPropsInterface>> = (props) => {
-  const {callbacks, rtcProps, mode} = useContext(PropsContext);
+  const {callbacks, rtcProps} = useContext(PropsContext);
   let [dualStreamMode, setDualStreamMode] = useState<DualStreamMode>(
     rtcProps?.initialDualStreamMode || DualStreamMode.DYNAMIC,
   );
-
-  const initialLocalState: UidStateInterface = {
-    min: [],
-    max: [
-      {
-        uid: 'local',
-        audio:
-          mode == ChannelProfile.LiveBroadcasting &&
-          rtcProps?.role == ClientRole.Audience
-            ? ToggleState.disabled
-            : ToggleState.enabled,
-        video:
-          mode == ChannelProfile.LiveBroadcasting &&
-          rtcProps?.role == ClientRole.Audience
-            ? ToggleState.disabled
-            : ToggleState.enabled,
-        streamType: 'high',
-      },
-    ],
-  };
-
   const [initialState, setInitialState] = React.useState(
     JSON.parse(JSON.stringify(initialLocalState)),
   );
@@ -124,6 +115,11 @@ const RtcConfigure: React.FC<Partial<RtcPropsInterface>> = (props) => {
           stateUpdate = RemoteVideoStateChanged(state, action);
         }
         break;
+      case 'SetState':
+        if (actionTypeGuard(action, action.type)) {
+          stateUpdate = action.value[0];
+        }
+        break;
     }
 
     // TODO: remove Handle event listeners
@@ -179,6 +175,16 @@ const RtcConfigure: React.FC<Partial<RtcPropsInterface>> = (props) => {
     initialState,
   );
 
+  const setUidArray = (
+    param: UidStateInterface | ((p: UidStateInterface) => UidStateInterface),
+  ) => {
+    if (typeof param === 'function') {
+      dispatch({type: 'SetState', value: [param(uidState)]});
+    } else {
+      dispatch({type: 'SetState', value: [param]});
+    }
+  };
+
   return (
     <Create dispatch={dispatch}>
       {(engineRef) => (
@@ -192,6 +198,7 @@ const RtcConfigure: React.FC<Partial<RtcPropsInterface>> = (props) => {
               RtcEngine: engineRef.current,
               dispatch,
               setDualStreamMode,
+              setUidArray,
             }}>
             <MaxUidProvider value={uidState.max}>
               <MinUidProvider value={uidState.min}>
