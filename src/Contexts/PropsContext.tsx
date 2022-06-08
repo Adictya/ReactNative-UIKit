@@ -1,10 +1,10 @@
+// @ts-nocheck
 import React from 'react';
 import {StyleProp, ViewStyle} from 'react-native';
 import {RtcEngineEvents} from 'react-native-agora/lib/typescript/src/common/RtcEvents';
 import {EncryptionMode} from 'react-native-agora';
 import {VideoProfile} from '../Utils/quality';
 import {UidStateInterface} from './RtcContext';
-
 /* User role for live streaming mode */
 export enum ClientRole {
   /* 1: A host can both send and receive streams. */

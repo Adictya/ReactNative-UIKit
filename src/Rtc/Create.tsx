@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, {useState, useEffect, useContext, useRef, FC} from 'react';
 import RtcEngine, {
   VideoEncoderConfiguration,
@@ -163,7 +164,8 @@ const Create = ({
     }
     init();
     return () => {
-      engine.current!.destroy();
+      if(engine.current.destroy)
+        engine.current!.destroy();
     };
   }, [rtcProps.appId]);
 
