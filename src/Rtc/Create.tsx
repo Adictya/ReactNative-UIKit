@@ -23,8 +23,11 @@ const Create = ({
 }) => {
   const [ready, setReady] = useState(false);
   const {callbacks, rtcProps, mode} = useContext(PropsContext);
+  const {geoFencing = true} = rtcProps || {};
   let engine = useRef<RtcEngine>({} as RtcEngine);
-  const beforeCreate = rtcProps?.lifecycle?.useBeforeCreate ? rtcProps.lifecycle.useBeforeCreate() : null; 
+  const beforeCreate = rtcProps?.lifecycle?.useBeforeCreate
+    ? rtcProps.lifecycle.useBeforeCreate()
+    : null;
   const isVideoEnabledRef = useRef<boolean>(false);
   const firstUpdate = useRef(true);
 
@@ -75,14 +78,17 @@ const Create = ({
         await requestCameraAndAudioPermission();
       }
       try {
-        if(beforeCreate){
+        if (beforeCreate) {
           await beforeCreate();
-        }  
+        }
       } catch (error) {
-        console.error('FPE:Error on executing useBeforeCreate',error);
+        console.error('FPE:Error on executing useBeforeCreate', error);
       }
       try {
-        if (Platform.OS === 'android' || Platform.OS === 'ios') {
+        if (
+          geoFencing === true &&
+          (Platform.OS === 'android' || Platform.OS === 'ios')
+        ) {
           engine.current = await RtcEngine.createWithAreaCode(
             rtcProps.appId,
             // eslint-disable-next-line no-bitwise
@@ -192,8 +198,7 @@ const Create = ({
     }
     init();
     return () => {
-      if(engine.current.destroy)
-        engine.current!.destroy();
+      if (engine.current.destroy) engine.current!.destroy();
     };
   }, [rtcProps.appId]);
 

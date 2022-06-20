@@ -108,6 +108,7 @@ export interface RtcPropsInterface {
     useBeforeJoin?: () => () => Promise<void>,
     useBeforeCreate?: () => () => Promise<void>
   }
+  geoFencing?: boolean
 }
 
 export interface CallbacksInterface {
@@ -143,6 +144,7 @@ const initialValue: PropsInterface = {
   rtcProps: {
     appId: '',
     channel: '',
+    geoFencing: true
   },
 };
 
